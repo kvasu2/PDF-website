@@ -8,14 +8,18 @@ from wtforms.validators import InputRequired, Length, ValidationError
 import os
 from werkzeug.utils import secure_filename
 import shutil
-import subprocess
+from dotenv import load_dotenv
+import pdf_manipulation
 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'secret_key'
-app.config['UPLOAD_FOLDER'] = 'uploads'
+# Load environment variables from .env file
+load_dotenv()
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['UPLOAD_FOLDER'] = 'users'
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -97,7 +101,14 @@ def register():
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
-    user_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
+    user_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload")
+    items = [
+      {'id': 1, 'name': 'Item 1'},
+      {'id': 2, 'name': 'Item 2'},
+      {'id': 3, 'name': 'Item 3'},
+    ]
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
     if request.method == 'POST':
         # Handle file upload
         file = request.files['file']
@@ -105,8 +116,10 @@ def upload():
             file.save(os.path.join(user_folder, file.filename))
 
     folder_contents = os.listdir(user_folder)
+    download_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
+    download_contents = [f for f in os.listdir(download_folder) if os.path.isfile(os.path.join(download_folder, f))]
 
-    return render_template('upload.html', folder_contents=folder_contents,download_contents=folder_contents)
+    return render_template('upload.html', folder_contents=folder_contents,download_contents=download_contents,items=items)
 
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -119,19 +132,28 @@ def logout():
 @login_required
 def clear_folder():
     # Delete all files in the upload folder
-    shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username))
-    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username))
+    shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
     return redirect(url_for('upload'))
 
 @app.route('/run_script', methods=['POST'])
 @login_required
 def run_script():
-    # Run the Python script using the folder contents
-    #script_path = 'path_to_your_script.py'  # Replace with your script path
-    #subprocess.run([script_path, *folder_contents])
+    print("Received sorted list:", sorted_list)
     print("Running script")
-    print(os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)))
+    #supload_folder = os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    #file_list = [os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload",f) for f in upload_folder]
+    #out_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
+    #pdf_manipulation.merge_pdfs_in_order(file_list,out_dir,'merged.pdf')
     return redirect(url_for('upload'))
+
+
+@app.route('/sorted_list', methods=['POST'])
+def sorted_list():
+    sorted_list = request.get_json()
+    # Do something with the sorted list
+    print("Received sorted list:", sorted_list)
+    return jsonify(sorted_list)
 
 @app.route('/download/<filename>', methods=['GET'])
 @login_required

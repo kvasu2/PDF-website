@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 <body>
     <h1>Upload File</h1>
@@ -13,11 +14,14 @@
         <input type="submit" value="Upload">
     </form>
     <h2>Folder Contents</h2>
-    <ul>
-        {% for file in folder_contents %}
-        <li>{{ file }}</li>
-        {% endfor %}
-    </ul>
+    <div class="sortable-list">
+        <ul id="sortable">
+            {% for file in folder_contents %}
+                <li draggable="true" id="item_{{file}}">{{ file }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
     <form action="{{ url_for('clear_folder') }}" method="post">
         <input type="submit" value="Clear Folder">
@@ -26,6 +30,8 @@
     <form action="{{ url_for('run_script') }}" method="post">
         <input type="submit" value="Run Script">
     </form>
+
+
 
     <h2>Download Contents</h2>
     <ul>
