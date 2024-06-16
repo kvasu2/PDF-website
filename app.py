@@ -88,6 +88,8 @@ def login():
                 login_user(user)
                 user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
                 global global_sorted_list
+                if not os.path.exists(user_folder):
+                    os.makedirs(user_folder)
                 global_sorted_list = os.listdir(user_folder)
                 return redirect(url_for('home'))
             
@@ -95,6 +97,7 @@ def login():
     return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     form = RegisterForm()
 
