@@ -8,10 +8,26 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 <body>
+
+    <header>
+        <nav>
+            <ul>
+                <form action="{{ url_for('home') }}" method="get">
+                    <input type="submit" value="Home" class="button">
+                </form>
+            </ul>
+            <form action="{{ url_for('logout') }}" method="post">
+                <input type="submit" value="Logout" class="button">
+            </form>
+        </nav>
+    </header>
+    <main>
     <h1>Upload File</h1>
-    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+
+
+    <form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
-        <input type="submit" value="Upload">
+        <input type="submit" value="Upload" class="button">
     </form>
     <h2>Folder Contents</h2>
     <div class="sortable-list">
@@ -24,14 +40,12 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
     <form action="{{ url_for('clear_folder') }}" method="post">
-        <input type="submit" value="Clear Folder">
+        <input type="submit" value="Clear Folder" class="button">
     </form>
 
     <form action="{{ url_for('run_script') }}" method="post">
-        <input type="submit" value="Run Script">
+        <input type="submit" value="Run Script" class="button">
     </form>
-
-
 
     <h2>Download Contents</h2>
     <ul>
@@ -42,5 +56,9 @@
         </li>
         {% endfor %}
     </ul>
+
+</main>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </body>
 </html>

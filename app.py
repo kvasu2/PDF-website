@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -27,6 +27,10 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+dir_path = os.path.abspath(os.path.dirname(__file__))
+
+global_sorted_list = None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -82,7 +86,12 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                return redirect(url_for('upload'))
+                user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
+                global global_sorted_list
+                global_sorted_list = os.listdir(user_folder)
+                return redirect(url_for('home'))
+            
+    
     return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -98,15 +107,16 @@ def register():
 
     return render_template('register.html', form=form)
 
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route('/home')
 @login_required
-def upload():
-    user_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload")
-    items = [
-      {'id': 1, 'name': 'Item 1'},
-      {'id': 2, 'name': 'Item 2'},
-      {'id': 3, 'name': 'Item 3'},
-    ]
+def home():
+    return render_template('home.html')
+
+@app.route('/merge', methods=['GET', 'POST'])
+@login_required
+def merge():
+    global global_sorted_list   
+    user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
     if not os.path.exists(user_folder):
         os.makedirs(user_folder)
     if request.method == 'POST':
@@ -114,12 +124,16 @@ def upload():
         file = request.files['file']
         if file:
             file.save(os.path.join(user_folder, file.filename))
+            global_sorted_list.append(file.filename)
 
-    folder_contents = os.listdir(user_folder)
-    download_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
+        if global_sorted_list is None:
+            global_sorted_list = os.listdir(user_folder)
+
+
+    download_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
     download_contents = [f for f in os.listdir(download_folder) if os.path.isfile(os.path.join(download_folder, f))]
 
-    return render_template('upload.html', folder_contents=folder_contents,download_contents=download_contents,items=items)
+    return render_template('merge.html', folder_contents=global_sorted_list,download_contents=download_contents)
 
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -132,28 +146,28 @@ def logout():
 @login_required
 def clear_folder():
     # Delete all files in the upload folder
-    shutil.rmtree(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
-    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
-    return redirect(url_for('upload'))
+    shutil.rmtree(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    os.makedirs(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    global global_sorted_list
+    global_sorted_list = os.listdir(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    return redirect(url_for('merge'))
 
 @app.route('/run_script', methods=['POST'])
 @login_required
 def run_script():
-    print("Received sorted list:", sorted_list)
-    print("Running script")
-    #supload_folder = os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
-    #file_list = [os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username,"upload",f) for f in upload_folder]
-    #out_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
-    #pdf_manipulation.merge_pdfs_in_order(file_list,out_dir,'merged.pdf')
-    return redirect(url_for('upload'))
+    file_list = [os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload",f) for f in global_sorted_list]
+    out_dir = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
+    pdf_manipulation.merge_pdfs_in_order(file_list,out_dir,'merged.pdf')
+    return redirect(url_for('merge'))
 
 
 @app.route('/sorted_list', methods=['POST'])
 def sorted_list():
-    sorted_list = request.get_json()
+    global global_sorted_list
+    global_sorted_list = request.get_json()
     # Do something with the sorted list
-    print("Received sorted list:", sorted_list)
-    return jsonify(sorted_list)
+    print("Received sorted list:", global_sorted_list)
+    return jsonify(global_sorted_list)
 
 @app.route('/download/<filename>', methods=['GET'])
 @login_required

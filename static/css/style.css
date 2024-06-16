@@ -1,21 +1,74 @@
-/* style.css */
 body {
 	font-family: Arial, sans-serif;
-}
-
-.sortable-list {
-	max-width: 0 auto;
-	margin: 0 auto;
-}
-
-ul {
-	list-style-type: none;
-	padding: 0;
-}
-
-li {
 	background-color: #f0f0f0;
+}
+h1, h2 {
+	color: #333;
+	text-align: center;
+}
+.sortable-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.sortable-list li {
 	padding: 10px;
-	margin: 5px;
-	cursor: grab;
+	border-bottom: 1px solid #ccc;
+}
+.sortable-list li:last-child {
+	border-bottom: none;
+}
+.button {
+	background-color: #4CAF50;
+	color: #fff;
+	padding: 10px 20px;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+}
+.button:hover {
+	background-color: #3e8e41;
+}
+header {
+background-color: #333;
+color: #fff;
+padding: 10px;
+}
+
+nav {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+nav ul {
+list-style-type: none;
+margin: 0;
+padding: 0;
+}
+
+nav ul li {
+margin-right: 20px;
+}
+
+nav ul li:last-child {
+margin-right: 0;
+}
+
+nav ul li a {
+color: #fff;
+text-decoration: none;
+}
+
+nav form .button {
+background-color: #4CAF50;
+color: #fff;
+padding: 10px 20px;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+}
+
+nav form .button:hover {
+background-color: #3e8e41;
 }
