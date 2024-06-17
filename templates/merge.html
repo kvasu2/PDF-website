@@ -12,11 +12,11 @@
     <header>
         <nav>
             <ul>
-                <nav form action="{{ url_for('home') }}" method="get">
+                <form action="{{ url_for('home') }}" method="get">
                     <input type="submit" value="Home" class="button">
                 </form>
             </ul>
-            <nav form action="{{ url_for('logout') }}" method="post">
+            <form action="{{ url_for('logout') }}" method="get">
                 <input type="submit" value="Logout" class="button">
             </form>
         </nav>
