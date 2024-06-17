@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify,flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -10,6 +10,10 @@ from werkzeug.utils import secure_filename
 import shutil
 from dotenv import load_dotenv
 import pdf_manipulation
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+from wtforms import BooleanField
+
 
 
 app = Flask(__name__)
@@ -28,6 +32,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+admin = Admin(app)
+
+
 dir_path = os.path.abspath(os.path.dirname(__file__))
 
 global_sorted_list = None
@@ -36,14 +43,33 @@ global_sorted_list = None
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)
+
 
     def __repr__(self):
         return f"User('{self.username}')"
+
+class UserView(ModelView):
+    column_exclude_list = ['password']
+    def is_accessible(self):
+        return current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        # redirect to login page if user doesn't have access
+        return redirect(url_for('login', next=request.url))
+
+    can_create = False
+    can_edit = True
+    can_delete = True
+    form_columns = ('is_active', 'is_admin')
+
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[
@@ -58,6 +84,7 @@ class RegisterForm(FlaskForm):
         existing_user_username = User.query.filter_by(
             username=username.data).first()
         if existing_user_username:
+            flash('That username already exists. Please choose a different one.', 'error')
             raise ValidationError(
                 'That username already exists. Please choose a different one.')
 
@@ -74,6 +101,9 @@ class UploadFileForm(FlaskForm):
     file = FileField("File", validators=[InputRequired()])
     submit = SubmitField("Upload File")
 
+
+admin.add_view(UserView(User, db.session))
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -84,26 +114,31 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
-            if bcrypt.check_password_hash(user.password, form.password.data):
-                login_user(user)
-                user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
-                global global_sorted_list
-                if not os.path.exists(user_folder):
-                    os.makedirs(user_folder)
-                global_sorted_list = os.listdir(user_folder)
-                return redirect(url_for('home'))
+            if user.is_active:
+                if bcrypt.check_password_hash(user.password, form.password.data):
+                    login_user(user)
+                    user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
+                    global global_sorted_list
+                    if not os.path.exists(user_folder):
+                        os.makedirs(user_folder)
+                    global_sorted_list = os.listdir(user_folder)
+                    return redirect(url_for('home'))
+                else:
+                    flash('Incorrect password.', 'error')
+            else:
+                flash('User not active. Please contact an admin to activate your account.', 'error')
+        else:
+            flash('User does not exist.', 'error')
             
-    
     return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
-@login_required
 def register():
     form = RegisterForm()
 
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, password=hashed_password, is_active=True)
+        new_user = User(username=form.username.data, password=hashed_password, is_active=False,is_admin=False)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -129,8 +164,8 @@ def merge():
             file.save(os.path.join(user_folder, file.filename))
             global_sorted_list.append(file.filename)
 
-        if global_sorted_list is None:
-            global_sorted_list = os.listdir(user_folder)
+    if global_sorted_list is None:
+        global_sorted_list = os.listdir(user_folder)
 
 
     download_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
@@ -177,6 +212,7 @@ def sorted_list():
 def download_file(filename):
     user_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),app.config['UPLOAD_FOLDER'], current_user.username)
     return send_from_directory(user_folder, filename, as_attachment=True)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
