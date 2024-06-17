@@ -12,18 +12,18 @@
     <header>
         <nav>
             <ul>
-                <form action="{{ url_for('home') }}" method="get">
-                    <input type="submit" value="Home" class="button">
-                </form>
+              <li><a href="/home" class="nav-button">Home</a></li>
+              <li style="position: absolute; right: 0; margin-right: 20px;"><a href="/logout" class="nav-button">Logout</a></li>
+              <li>
+                {% if is_admin %}
+                <a href="/admin" class="nav-button">Admin</a>
+                {% endif %}
+              </li>
             </ul>
-            <form action="{{ url_for('logout') }}" method="get">
-                <input type="submit" value="Logout" class="button">
-            </form>
-        </nav>
+          </nav>
     </header>
     <main>
     <h1>Upload File</h1>
-
 
     <form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data">
         <input type="file" name="file">

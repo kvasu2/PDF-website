@@ -171,7 +171,7 @@ def merge():
     download_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
     download_contents = [f for f in os.listdir(download_folder) if os.path.isfile(os.path.join(download_folder, f))]
 
-    return render_template('merge.html', folder_contents=global_sorted_list,download_contents=download_contents)
+    return render_template('merge.html', folder_contents=global_sorted_list,download_contents=download_contents,is_admin=current_user.is_admin)
 
 
 @app.route('/logout', methods=['GET', 'POST'])
