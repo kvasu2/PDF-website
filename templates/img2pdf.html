@@ -25,7 +25,7 @@
     <main>
     <h1>Upload File</h1>
 
-    <form action="{{ url_for('merge') }}" method="post" enctype="multipart/form-data">
+    <form action="{{ url_for('img2pdf') }}" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
         <input type="submit" value="Upload" class="button">
     </form>
@@ -41,8 +41,10 @@
 
 
 
-    <form action="{{ url_for('run_script') }}" method="post">
-        <input type="submit" value="Merge PDFs" class="button">
+    <form action="{{ url_for('run_img2pdf') }}" method="post">
+        <input type="checkbox" name="enhance_image" value="True"> Enhance Image
+        <br>
+        <input type="submit" value="Convert images to PDFs" class="button">
     </form>
 
     <h2>Download Contents</h2>
@@ -55,9 +57,10 @@
         {% endfor %}
     </ul>
 
-    <form action="{{ url_for('clear_folder') }}" method="post">
+    <form action="{{ url_for('clear_folder_img') }}" method="post">
         <input type="submit" value="Clear all files" class="button">
     </form>
+
 </main>
 
 </body>

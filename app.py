@@ -173,6 +173,28 @@ def merge():
 
     return render_template('merge.html', folder_contents=global_sorted_list,download_contents=download_contents,is_admin=current_user.is_admin)
 
+@app.route('/img2pdf', methods=['GET', 'POST'])
+@login_required
+def img2pdf():
+    global global_sorted_list   
+    user_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload")
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    if request.method == 'POST':
+        # Handle file upload
+        file = request.files['file']
+        if file:
+            file.save(os.path.join(user_folder, file.filename))
+            global_sorted_list.append(file.filename)
+
+    if global_sorted_list is None:
+        global_sorted_list = os.listdir(user_folder)
+
+
+    download_folder = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
+    download_contents = [f for f in os.listdir(download_folder) if os.path.isfile(os.path.join(download_folder, f))]
+
+    return render_template('img2pdf.html', folder_contents=global_sorted_list,download_contents=download_contents,is_admin=current_user.is_admin)
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -188,7 +210,25 @@ def clear_folder():
     os.makedirs(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
     global global_sorted_list
     global_sorted_list = os.listdir(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    if os.path.exists(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged.pdf')):
+        os.remove(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged.pdf'))
+    if os.path.exists(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged_images.pdf')):
+        os.remove(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged_images.pdf'))
     return redirect(url_for('merge'))
+
+@app.route('/clear_folder_img', methods=['POST'])
+@login_required
+def clear_folder_img():
+    # Delete all files in the upload folder
+    shutil.rmtree(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    os.makedirs(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    global global_sorted_list
+    global_sorted_list = os.listdir(os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload"))
+    if os.path.exists(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged.pdf')):
+        os.remove(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged.pdf'))
+    if os.path.exists(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged_images.pdf')):
+        os.remove(os.path.join(dir_path, app.config['UPLOAD_FOLDER'], current_user.username, 'merged_images.pdf'))
+    return redirect(url_for('img2pdf'))
 
 @app.route('/run_script', methods=['POST'])
 @login_required
@@ -198,6 +238,20 @@ def run_script():
     pdf_manipulation.merge_pdfs_in_order(file_list,out_dir,'merged.pdf')
     return redirect(url_for('merge'))
 
+@app.route('/run_img2pdf', methods=['POST'])
+@login_required
+def run_img2pdf():
+    print(request.form.get('enhance_image'))
+
+    if request.form.get('enhance_image') =="True":
+        enhance_img = True
+    else:
+        enhance_img = False
+
+    file_list = [os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username,"upload",f) for f in global_sorted_list]
+    out_dir = os.path.join(dir_path,app.config['UPLOAD_FOLDER'], current_user.username)
+    pdf_manipulation.convert2pdf_with_order(file_list,out_dir,'merged_images.pdf',enhance_img=enhance_img)
+    return redirect(url_for('img2pdf'))
 
 @app.route('/sorted_list', methods=['POST'])
 def sorted_list():

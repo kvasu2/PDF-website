@@ -63,6 +63,46 @@ def merge_pdfs_with_bookmarks(input_folder, csv_path, output_folder,merged_filen
     with open(output_path, 'wb') as f:
         merger.write(f)
 
+def convert2pdf_with_order(input_list,output_dir,merged_filename,enhance_img=False):
+    Image = importlib.import_module('PIL.Image')
+
+    if enhance_img:
+        processed_image_path = os.path.join(output_dir,"enhanced_images")
+
+        if os.path.exists(processed_image_path):
+            shutil.rmtree(processed_image_path)
+            os.makedirs(processed_image_path)
+        else:
+            os.makedirs(processed_image_path)
+
+    converted_pdfs_path = os.path.join(output_dir,"converted_pdfs")
+    if os.path.exists(converted_pdfs_path):
+        shutil.rmtree(converted_pdfs_path)
+        os.makedirs(converted_pdfs_path)
+    else:
+        os.makedirs(converted_pdfs_path)
+
+    pdf_list = []
+
+    for input_image in input_list:
+        if input_image.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+            img_name = os.path.basename(input_image)
+            pdf_list.append(os.path.join(converted_pdfs_path,img_name)+'.pdf')
+            pdf = open(os.path.join(converted_pdfs_path,img_name)+'.pdf', 'wb')
+            if enhance_img:
+                image = enhance_image(input_image,os.path.join(output_dir,"enhanced_images",img_name))
+                image = Image.fromarray(image)
+            else:
+                image = Image.open(input_image)
+            image = image.convert('RGB')
+            image.save(pdf, 'PDF')
+            pdf.close()
+    
+    merge_pdfs_in_order(pdf_list,output_dir,merged_filename)
+    if enhance_img:
+        shutil.rmtree(processed_image_path)
+
+    shutil.rmtree(converted_pdfs_path)
 
 def convert2pdf(input_dir,output_dir,merged_filename,enhance_img=False,delete_processed_images=False,delete_temp_pdfs=False):
     Image = importlib.import_module('PIL.Image')
