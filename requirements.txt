@@ -25,6 +25,7 @@ pycparser==2.21
 pyftpdlib==1.5.9
 PyPDF2==3.0.1
 python-dotenv==1.0.1
+pdf-manipulation>=0.0.2
 setuptools==69.5.1
 six==1.16.0
 SQLAlchemy==1.4.35

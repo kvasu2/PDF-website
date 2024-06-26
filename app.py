@@ -6,14 +6,11 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FileField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 import os
-from werkzeug.utils import secure_filename
 import shutil
 from dotenv import load_dotenv
 import pdf_manipulation
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from wtforms import BooleanField
-
 
 
 app = Flask(__name__)
