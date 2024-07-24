@@ -11,7 +11,7 @@ SECRET_KEY=
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=
 ```
-2. Create a virtual envronment `python3 -m venv myenv`
+2. Create a virtual envronment `python3 -m venv myenv` and activate it by `. /venv/bin/activate`
 
 3. Install requirements `pip install -r requirements.txt`
 
